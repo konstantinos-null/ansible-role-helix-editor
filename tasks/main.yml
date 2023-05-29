@@ -1,0 +1,74 @@
+---
+# tasks file for helix_install
+
+- name: Ensure cargo is installed
+  ansible.builtin.package:
+    name: cargo
+    state: present
+
+- name: Git clone
+  ansible.builtin.git:
+    repo: 'https://github.com/helix-editor/helix'
+    dest: code/source_builds/
+
+- name: Change directory and build from source
+  ansible.builtin.command:
+    cmd: cargo install --path helix-term --locked
+  args:
+    chdir: ~/code/source_builds/helix/
+
+- name: Validate helix editor was installed
+  command: hx --version
+  register: version_output
+  tags: checkcheck
+
+- name: Check helix editor version
+  ansible.builtin.debug:
+    var: version_output
+  tags: checkcheck
+
+- name: Add python language server
+  ansible.builtin.pip:
+    name: "python-lsp-server[all]"
+  tags: checkcheck
+
+
+- name: Install npm with snap on ubuntu
+  community.general.snap:
+    name: node
+    classic: true
+    channel: stable
+  when: ansible_facts['distribution'] == "Ubuntu"
+
+- name: Install npm with dnf on fedora
+  ansible.builtin.dnf:
+    name: nodejs
+    state: present
+  when: ansible_facts['distribution'] == "Fedora"
+
+- name: Install ansible language server
+  community.general.npm:
+    name: ansible-language-server
+    global: true
+
+- name: Install bash language server
+  community.general.npm:
+    name: bash-language-server
+    global: true
+  when: ansible_facts['distribution'] == "Ubuntu"
+
+- name: Install bash language server
+  ansible.builtin.dnf:
+    name: nodejs-bash-language-server
+    global: true
+  when: ansible_facts['distribution'] == "Fedora"
+
+- name: Add hashicorp repository to install terraform-ls
+
+- name: Install terraform language server
+  ansible.builtin.package:
+    name: terraform-ls
+    state: present
+
+
+# TODO ensure cargo is in system PATH
